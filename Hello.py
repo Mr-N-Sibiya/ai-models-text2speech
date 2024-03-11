@@ -17,33 +17,35 @@ from streamlit.logger import get_logger
 from moviepy.editor import concatenate_audioclips, AudioFileClip
 from replicate.client import Client
 from replicate import Client
-import streamlit_authenticator as stauch
+from PyPDF2 import PdfReader
 import tempfile
+import PyPDF2 
 
 import requests
 
 LOGGER = get_logger(__name__)
 
-
-
-
-
-
-
-
-
+def read_pdf(file):
+    text = ""
+    print("this is inside the function")
+    pdf_reader = PdfReader(file)
+    for page_num in range(len(pdf_reader.pages)):
+        page = pdf_reader.pages[page_num]
+        text += page.extract_text()
+        print("this is inside the for loop")
+    return text
 
 def run():
     import replicate
     
-
+    # Initialize session_state
+    session_state = st.session_state
+    
     st.set_page_config(
         page_title="2 SpeechTTS",
         page_icon="👋",
     )
 
-
-    
     st.write("# Welcome to TTSModel 👋")
     genre = st.radio(
         "**How do you want to use 2_SpeechTTS**",
@@ -53,14 +55,12 @@ def run():
     )
 
     if genre == 'Write Text':
-        input_text=[]
         input_text = st.text_area("Please Enter Text to Convert to Speech", key="qw13")
         if st.button("Convert to Speech"):
             # Call function to convert input_text to speech
-            pass
             # Authenticate replicate client
             replicate = replicate.Client(api_token='r8_FPd0TDjuTIaLK6pJ86sWou8rWBBD4oC1dzWt0')
-            words=input_text.split()
+            words = input_text.split()
             api_input_text = " ".join(words)
 
             output = replicate.run(
@@ -74,29 +74,32 @@ def run():
                     "embedding_scale": 1.5
                 }
             )
-            print(output)
-
-
-
-
+            st.audio(output, format='audio/wav', start_time=0)
+            # Set session_state variable to trigger rerun
+            session_state.button_triggered = True
+            
     else: 
         file_up = st.file_uploader("Choose PDF File", type="pdf", key="qr")
         if st.button("Convert to Speech"):
-            if file_up is not None:
-                # Call function to convert file_up to speech
-                pass
-                print("code for uploading file")
-            else:
-                st.warning("Please upload a PDF file.")
-                print(file_up)
-
+            if file_up is not None:     
+                print("where the magic happens")
+                st.text("Uploaded successfully!")
+                st.text("Converting PDF to audio...")
+                text = read_pdf(file_up)
+                st.write(text)
     
 
 
+            else:
+                st.warning("Please upload a PDF file.")
+                print(file_up)
+            # Set session_state variable to trigger rerun
+            session_state.button_triggered = True
 
+    # Check if button has triggered and rerun if True
+    if session_state.get('button_triggered'):
+        st.rerun()
+    
 
 if __name__ == "__main__":
     run()
-
-
-
