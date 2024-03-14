@@ -35,6 +35,10 @@ def read_pdf(file):
         print("this is inside the for loop")
     return text
 
+def split_text_into_words(text):
+    words = text.split()
+    return [words[i:i+40] for i in range(0, len(words), 40)]
+
 def run():
     import replicate
     
@@ -74,7 +78,7 @@ def run():
                     "embedding_scale": 1.5
                 }
             )
-            st.audio(output, format='audio/wav', start_time=0)
+            st.audio(output, format='audio/mp3', start_time=0)
             # Set session_state variable to trigger rerun
             session_state.button_triggered = True
             
@@ -87,9 +91,43 @@ def run():
                 st.text("Converting PDF to audio...")
                 text = read_pdf(file_up)
                 st.write(text)
-    
 
+                # Split the passage into words
+                words_list = split_text_into_words(text)
+                # Create a list to store all the converted words
+                #st.write("the following is words_list")
+                #st.write(words_list)
+                all_words = []
 
+                # Display words in batches of 15 until all words are depleted
+                # Display words in batches of 15 until all words are depleted
+                replicate = replicate.Client(api_token='r8_FPd0TDjuTIaLK6pJ86sWou8rWBBD4oC1dzWt0')
+                for batch in words_list:
+                    batch = words_list.pop(0)
+                    #st.write("the batch before extend on all words")
+                    #st.write(batch)
+                    
+                    all_words.extend(batch)
+                    #st.write("all_words extendend with batch")
+                    #st.write(all_words)
+                    api_input_text = ' '.join(map(str, all_words))  # Join all words, converting each to a string
+                    #st.write(batch)
+                    #print(batch)
+                    
+                    output = replicate.run(
+                        "adirik/styletts2:989cb5ea6d2401314eb30685740cb9f6fd1c9001b8940659b406f952837ab5ac",
+                        input={
+                            "beta": 0.7,
+                            "seed": 5,
+                            "text": api_input_text,
+                            "alpha": 0.3,
+                            "diffusion_steps": 10,
+                            "embedding_scale": 1.5
+                        }
+                    )
+                    st.audio(output, format='audio/mp3', start_time=0)
+                    #output
+                    
             else:
                 st.warning("Please upload a PDF file.")
                 print(file_up)
