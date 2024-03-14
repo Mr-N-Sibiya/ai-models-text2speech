@@ -14,14 +14,7 @@
 
 import streamlit as st
 from streamlit.logger import get_logger
-from moviepy.editor import concatenate_audioclips, AudioFileClip
-from replicate.client import Client
-from replicate import Client
 from PyPDF2 import PdfReader
-import tempfile
-import PyPDF2 
-
-import requests
 
 LOGGER = get_logger(__name__)
 
